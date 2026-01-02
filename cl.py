@@ -349,8 +349,10 @@ def process_inventory_report(inventory_file, purchase_master_file, business_pivo
     Inventory_Report_Pivot["DOC"] = pd.to_numeric(Inventory_Report_Pivot["DOC"], errors="coerce").fillna(0)
     
     # Filter out items with no sales
-    Inventory_Report_Pivot = Inventory_Report_Pivot[Inventory_Report_Pivot["Final Sales Units"] != 0]
-    
+    #Inventory_Report_Pivot = Inventory_Report_Pivot[Inventory_Report_Pivot["Final Sales Units"] != 0]
+    # Instead of removing, set Final Sales Units negative value to 0
+    Inventory_Report_Pivot["Final Sales Units"] = Inventory_Report_Pivot["Final Sales Units"].clip(lower=0)
+
     # Create OOS Inventory
     OOS_Inventory = Inventory_Report_Pivot[
         Inventory_Report_Pivot["Current stock count for your product"] == 0
