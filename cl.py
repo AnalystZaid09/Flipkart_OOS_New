@@ -324,7 +324,7 @@ def process_inventory_report(inventory_file, purchase_master_file, business_pivo
     )
     
     # Fill NaN values
-    Inventory_Report_Pivot[["CP", "Final Sales Units"]] = Inventory_Report_Pivot[["CP", "Final Sales Units"]].fillna(0)
+    Inventory_Report_Pivot[["Final Sales Units","CP"]] = Inventory_Report_Pivot[["Final Sales Units","CP"]].fillna(0)
     
     # Clean CP
     Inventory_Report_Pivot["CP"] = (
@@ -613,3 +613,4 @@ else:
         - **OOS (Out of Stock)**: Items with Current Stock = 0
         - **Overstock**: Items with DOC > Threshold
         """)
+
