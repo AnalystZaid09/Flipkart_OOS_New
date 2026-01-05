@@ -353,6 +353,13 @@ def process_inventory_report(inventory_file, purchase_master_file, business_pivo
     # Instead of removing, set Final Sales Units negative value to 0
     Inventory_Report_Pivot["Final Sales Units"] = Inventory_Report_Pivot["Final Sales Units"].clip(lower=0)
 
+    Inventory_Report_Pivot = Inventory_Report_Pivot[[
+        "Flipkart's Identifier of the product", "Vendor SKU Codes", "Brand", "Brand Manager",
+        "Product Name", "Current stock count for your product",
+        "Final Sales Units", "DRR", "DOC",  # keep your metric columns
+        "CP", "As Per Qty CP"
+    ]]
+    
     # Create OOS Inventory
     OOS_Inventory = Inventory_Report_Pivot[
         Inventory_Report_Pivot["Current stock count for your product"] == 0
@@ -613,4 +620,5 @@ else:
         - **OOS (Out of Stock)**: Items with Current Stock = 0
         - **Overstock**: Items with DOC > Threshold
         """)
+
 
