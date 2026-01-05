@@ -356,8 +356,8 @@ def process_inventory_report(inventory_file, purchase_master_file, business_pivo
     Inventory_Report_Pivot = Inventory_Report_Pivot[[
         "Flipkart's Identifier of the product", "Vendor SKU Codes", "Brand", "Brand Manager",
         "Product Name", "Current stock count for your product",
-        "Final Sales Units", "DRR", "DOC",  # keep your metric columns
-        "CP", "As Per Qty CP"
+        "Final Sales Units",
+        "CP", "As Per Qty CP", "DRR", "DOC" # keep your metric columns
     ]]
     
     # Create OOS Inventory
@@ -620,5 +620,6 @@ else:
         - **OOS (Out of Stock)**: Items with Current Stock = 0
         - **Overstock**: Items with DOC > Threshold
         """)
+
 
 
