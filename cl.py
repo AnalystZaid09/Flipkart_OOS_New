@@ -6,7 +6,7 @@ from openpyxl.styles import PatternFill, Font
 
 # Page configuration
 st.set_page_config(
-    page_title="Flipkart Inventory Management",
+    page_title="Flipkart OOS Inventory Management",
     page_icon="📦",
     layout="wide"
 )
@@ -377,7 +377,7 @@ def process_inventory_report(inventory_file, purchase_master_file, business_pivo
     return Inventory_Report_Pivot, OOS_Inventory, Overstock_Inventory, OOS_Inventory_Pivot, Overstock_Inventory_Pivot
 
 # Main App
-st.title("📦 Flipkart Inventory Management System")
+st.title("📦 Flipkart OOS Inventory Management System")
 
 # Sidebar for file uploads
 st.sidebar.header("📁 Upload Files")
@@ -620,6 +620,7 @@ else:
         - **OOS (Out of Stock)**: Items with Current Stock = 0
         - **Overstock**: Items with DOC > Threshold
         """)
+
 
 
 
