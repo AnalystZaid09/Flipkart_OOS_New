@@ -214,10 +214,9 @@ def process_business_report(business_file, purchase_master_file, inventory_file,
     
     Business_Pivot.fillna("", inplace=True)
     
-    # Calculate As Per Qty CP
+    # Calculate CP Columns
     Business_Pivot["CP_numeric"] = pd.to_numeric(Business_Pivot["CP"], errors="coerce").fillna(0)
-    Business_Pivot["As Per Qty CP"] = Business_Pivot["Sum of Final Sale Units"] * Business_Pivot["CP_numeric"]
-    Business_Pivot.drop("CP_numeric", axis=1, inplace=True)
+    Business_Pivot["CP As Per Final Sale Units"] = Business_Pivot["Sum of Final Sale Units"] * Business_Pivot["CP_numeric"]
     
     # Calculate DRR
     Business_Pivot["DRR"] = (Business_Pivot["Sum of Final Sale Units"] / no_of_days).round(2)
@@ -248,6 +247,21 @@ def process_business_report(business_file, purchase_master_file, inventory_file,
     inventory_lookup = inventory_pivot.drop_duplicates(subset="FNS", keep="first").set_index("FNS")
     Business_Pivot["Current Stock"] = Business_Pivot["Product Id"].map(inventory_lookup["Current Stock"]).fillna(0)
     
+    # Calculate CP As Per Current Stock
+    Business_Pivot["CP As Per Current Stock"] = Business_Pivot["Current Stock"] * Business_Pivot["CP_numeric"]
+    Business_Pivot.drop("CP_numeric", axis=1, inplace=True)
+    
+    # Reorder columns to include new CP columns before DOC
+    cols = list(Business_Pivot.columns)
+    # Common columns we want to keep in order
+    base_cols = [
+        "Product Id", "SKU ID", "Vendor SKU Codes", "Brand", "Product Name",
+        "Brand Manager", "GMV", "Gross Units", "Final Sale Amount", "Sum of Final Sale Units", "CP"
+    ]
+    other_cols = ["DRR", "Current Stock", "CP As Per Final Sale Units", "CP As Per Current Stock"]
+    # DOC will be calculated next and appended
+    Business_Pivot = Business_Pivot[base_cols + other_cols]
+
     # Calculate DOC
     Business_Pivot["DOC"] = Business_Pivot["Current Stock"] / Business_Pivot["DRR"]
     Business_Pivot["DOC"] = Business_Pivot["DOC"].replace([np.inf, -np.inf], np.nan)
@@ -326,18 +340,30 @@ def process_inventory_report(inventory_file, purchase_master_file, business_pivo
     # Fill NaN values
     Inventory_Report_Pivot[["Final Sales Units","CP"]] = Inventory_Report_Pivot[["Final Sales Units","CP"]].fillna(0)
     
-    # Clean CP
-    Inventory_Report_Pivot["CP"] = (
+    # Clean CP and ensure numeric
+    Inventory_Report_Pivot["CP_numeric"] = (
         Inventory_Report_Pivot["CP"]
         .astype(str)
         .str.replace(",", "", regex=False)
         .str.strip()
     )
-    Inventory_Report_Pivot["CP"] = pd.to_numeric(Inventory_Report_Pivot["CP"], errors="coerce").round(2)
-    
-    # Calculate As Per Qty CP
-    Inventory_Report_Pivot["As Per Qty CP"] = Inventory_Report_Pivot["CP"] * Inventory_Report_Pivot["Final Sales Units"]
-    
+    Inventory_Report_Pivot["CP_numeric"] = pd.to_numeric(Inventory_Report_Pivot["CP_numeric"], errors="coerce").fillna(0)
+
+    # Calculate CP Columns
+    Inventory_Report_Pivot["CP As Per Final Sale Units"] = Inventory_Report_Pivot["CP_numeric"] * Inventory_Report_Pivot["Final Sales Units"]
+    Inventory_Report_Pivot["CP As Per Current Stock"] = Inventory_Report_Pivot["CP_numeric"] * Inventory_Report_Pivot["Current stock count for your product"]
+    Inventory_Report_Pivot.drop("CP_numeric", axis=1, inplace=True)
+
+    # Reorder columns to include new CP columns before DRR
+    cols = [
+        "Flipkart's Identifier of the product", "Vendor SKU Codes", "Brand", "Brand Manager",
+        "Product Name", "Current stock count for your product", "CP", "Final Sales Units",
+        "CP As Per Final Sale Units", "CP As Per Current Stock"
+    ]
+    # Keep any other columns that might be added later
+    remaining_cols = [c for c in Inventory_Report_Pivot.columns if c not in cols and c not in ["DRR", "DOC"]]
+    Inventory_Report_Pivot = Inventory_Report_Pivot[cols + remaining_cols]
+
     # Calculate DRR
     Inventory_Report_Pivot["DRR"] = (Inventory_Report_Pivot["Final Sales Units"] / no_of_days_inventory).round(2)
     
@@ -353,12 +379,6 @@ def process_inventory_report(inventory_file, purchase_master_file, business_pivo
     # Instead of removing, set Final Sales Units negative value to 0
     Inventory_Report_Pivot["Final Sales Units"] = Inventory_Report_Pivot["Final Sales Units"].clip(lower=0)
 
-    Inventory_Report_Pivot = Inventory_Report_Pivot[[
-        "Flipkart's Identifier of the product", "Vendor SKU Codes", "Brand", "Brand Manager",
-        "Product Name", "Current stock count for your product",
-        "Final Sales Units",
-        "CP", "As Per Qty CP", "DRR", "DOC" # keep your metric columns
-    ]]
     
     # Create OOS Inventory
     OOS_Inventory = Inventory_Report_Pivot[
@@ -620,7 +640,3 @@ else:
         - **OOS (Out of Stock)**: Items with Current Stock = 0
         - **Overstock**: Items with DOC > Threshold
         """)
-
-
-
-
